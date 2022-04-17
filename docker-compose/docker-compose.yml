@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+    redis:
+        image: redis:alpine
+        restart: always
+        network_mode: host
+        environment:
+            REDIS_PASSWORD: ${REDIS_SECRET}
+            REDIS_BINDING: 0.0.0.0
+    mongo:
+        network_mode: host
+        image: mongo:4.4
+        volumes:
+            - ./mongo_data:/data/db
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+            MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASS}
+        restart: always
+
+    nginx:
+        image: nginx:stable-alpine
+        restart: always
+        network_mode: host
+        volumes:
+            - ./certificates:/etc/nginx/certificates
+            - ./frontend/kavidu-session-service:/var/www/html/class
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf

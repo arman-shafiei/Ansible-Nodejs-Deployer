@@ -1,0 +1,122 @@
+version : '3.7'
+
+services:
+  authentication-service:
+    network_mode: host
+    restart: always
+    build:
+      context: ./backend/authentication-service
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend/authentication-service:/usr/app
+    environment:
+      MONGO_URI : mongodb://${MONGODB_HOST}:27017
+      MONGODB_USER: ${MONGODB_USER}
+      MONGODB_PASS: ${MONGODB_PASS}
+      SUPPORT_SERVICE_URL : ${SESSION_SERVICE_URL}
+      QA_SERVICE_URL: ${QA_SERVICE_URL}
+      FILE_SERVICE_URL: ${FILE_SHARING_SERVICE_URL}
+      SURVEY_SERVICE_URL: ${SURVEY_SERVICE_URL}
+      REDIS_URL: ${REDIS_IP}
+      REDIS_PASSWORD: ${REDIS_SECRET}
+      SUPER_ADMIN_USER: ${SUPER_ADMIN_USER}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD}
+
+  support-service:
+    network_mode: host
+    restart: always
+    build:
+        context: ./backend/support-service
+        dockerfile: Dockerfile
+    volumes:
+      - ./backend/support-service:/usr/app
+    environment:
+      MONGO_URI : mongodb://${MONGODB_HOST}:27017
+      MONGODB_USER: ${MONGODB_USER}
+      MONGODB_PASS: ${MONGODB_PASS}
+      DOMAIN_URL: ${DOMAIN_URL}
+      REDIS_URL: ${REDIS_IP}
+      REDIS_PASSWORD: ${REDIS_SECRET}
+
+  qa-service:
+    network_mode: host
+    restart: always
+    build:
+      context: ./backend/qa-service
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend/qa-service:/usr/app
+    environment:
+      MONGO_URI : mongodb://${MONGODB_HOST}:27017
+      MONGODB_USER: ${MONGODB_USER}
+      MONGODB_PASS: ${MONGODB_PASS}
+      REDIS_URL: ${REDIS_IP}
+      REDIS_PASSWORD: ${REDIS_SECRET}
+
+  file-service:
+    network_mode: host
+    restart: always
+    build:
+      context: ./backend/file-service
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend/file-service:/usr/app
+    environment:
+      MONGO_URI : mongodb://${MONGODB_HOST}:27017
+      MONGODB_USER: ${MONGODB_USER}
+      MONGODB_PASS: ${MONGODB_PASS}
+      OWNCLOUD_URL: ${OWNCLOUD_URL}
+      OWNCLOUD_SECRET: ${OWNCLOUD_SECRET}
+      OWNCLOUD_USER: ${OWNCLOUD_USER}
+      REDIS_URL: ${REDIS_IP}
+      REDIS_PASSWORD: ${REDIS_SECRET}
+
+  survey-service:
+    network_mode: host
+    restart: always
+    build:
+      context: ./backend/survey-service
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend/survey-service:/usr/app
+    environment:
+      MONGO_URI : mongodb://${MONGODB_HOST}:27017
+      MONGODB_USER: ${MONGODB_USER}
+      MONGODB_PASS: ${MONGODB_PASS}
+      REDIS_URL: ${REDIS_IP}
+      REDIS_PASSWORD: ${REDIS_SECRET}
+
+  accounting-service:
+    network_mode: host
+    volumes:
+      - ./backend/accounting-service:/usr/app
+    build:
+      context: ./backend/accounting-service
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      MONGO_URI : mongodb://${MONGODB_HOST}:27017
+      MONGODB_USER: ${MONGODB_USER}
+      MONGODB_PASS: ${MONGODB_PASS}
+      REDIS_URL: ${REDIS_IP}
+      REDIS_PASSWORD: ${REDIS_SECRET}
+
+  nodeexporter:
+    image: prom/node-exporter:latest
+    container_name: nodeexporter
+    user: root
+    privileged: true
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: always
+    network_mode: host
+    expose:
+      - 9100
+    labels:
+      org.label-schema.group: "monitoring"

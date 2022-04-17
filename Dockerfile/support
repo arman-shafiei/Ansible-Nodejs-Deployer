@@ -1,0 +1,9 @@
+FROM ubuntu:focal
+
+WORKDIR /usr/app
+
+COPY . /usr/app
+
+RUN chmod +x /usr/app/support
+
+ENTRYPOINT ["/usr/app/support"]

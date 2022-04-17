@@ -1,0 +1,77 @@
+---
+
+###These variables are used for all the deployments include remote and local machines.
+###In order to avoid mistakes some values are enclosed with quotes.
+
+basic_packages:
+        - curl
+        - chrony
+        - iptables-services
+        - iptables-utils
+        - wget
+        - yum-utils
+
+docker_repo: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+docker_gpg_key: https://download.docker.com/linux/centos/gpg
+docker_packages:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+
+docker-compose_url: "https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-$(uname -s)-$(uname -m)"
+
+trusted_ssh_ips: <Your trusted IPs seperated by comma>
+ssh_port: 22
+trusted_icmp_ips: <Your trusted IPs seperated by comma>
+
+is_exclusive: false
+
+git_back_url: "<Address of your backend nodejs repo>"
+git_front_url: "<Address of your frontend react repo>"
+
+back_repo_names:
+        - local: accounting-service
+          remote: accounting
+        - local: authentication-service
+          remote: authentication
+        - local: support-service
+          remote: support
+        - local: file-service
+          remote: file
+        - local: qa-service
+          remote: qa
+        - local: survey-service
+          remote: survey
+
+front_repo_names:
+        - local: frontend-service
+          remote: frontend-service
+
+dockerfiles:
+        - accounting
+        - authentication
+        - support
+        - file
+        - qa
+        - survey
+
+ansible_exec_path: /<Some path>
+remote_base_path: /<Some path>
+
+use_ssl: true
+
+essential_services:
+        - mongo
+        - redis
+        - cloud
+        - nginx
+
+nginx_files:
+        - nginx.conf
+        - default.conf
+
+ssh_user: root
+
+remote_hosts:
+        - domain: example.com
+          addr: <Server IP>

@@ -1,0 +1,335 @@
+---
+
+- hosts: test
+  name: Deploy basis
+  connection: ssh
+  remote_user: root
+  gather_facts: false
+  vars_files:
+          - ./vars.yml
+  tasks:
+          - name: remove default resolver file
+            file:
+                    path: /etc/resolv.conf
+                    state: absent
+          - name: put entries into resolver file
+            blockinfile:
+                    path: /etc/resolv.conf
+                    block: |
+                            nameserver 9.9.9.9
+                            nameserver 4.2.2.4
+                    create: true
+          - name: stop firewalld
+            shell: systemctl disable --now firewalld
+          - name: mask firewalld
+            shell: systemctl mask firewalld
+          - name: install EPEL repo
+            yum:
+              name: 'epel-release'
+              update_cache: true
+              state: latest
+          - name: update system
+            yum:
+              name: '*'
+              update_cache: true
+              state: latest
+            register: updated_packages
+          - debug: var=updated_packages
+          - name: reboot system
+            reboot:
+                    reboot_timeout: 1200
+          - name: install packages
+            yum:
+                    update_cache: true
+                    name: "{{ basic_packages }}"
+                    state: present
+            register: installed_packages
+          - debug: var=installed_packages
+          - name: flush firewall
+            iptables:
+                    flush: true
+          - name: add lo rule to firewall
+            iptables:
+                    action: insert
+                    chain: INPUT
+                    in_interface: lo
+                    jump: ACCEPT
+          - name: add state rule
+            iptables:
+                    action: insert
+                    chain: INPUT
+                    ctstate: ESTABLISHED,RELATED
+                    jump: ACCEPT
+          - name: add trusted ips for ssh
+            iptables:
+                    action: insert
+                    chain: INPUT
+                    source: "{{ trusted_ssh_ips }}"
+                    protocol: tcp
+                    destination_port: "{{ ssh_port }}"
+                    jump: ACCEPT
+            when: is_exclusive == false
+          - name: block untrusted ips for ssh
+            iptables:
+                    action: append
+                    chain: INPUT
+                    protocol: tcp
+                    destination_port: "{{ ssh_port }}"
+                    jump: DROP
+            when: is_exclusive == false
+          - name: add trusted ips for icmp
+            iptables:
+                    action: insert
+                    chain: INPUT
+                    protocol: icmp
+                    icmp_type: 8
+                    source: "{{ trusted_icmp_ips }}"
+                    jump: ACCEPT
+            when: is_exclusive == false
+          - name: block untrusted ips for icmp
+            iptables:
+                    action: append
+                    chain: INPUT
+                    protocol: icmp
+                    icmp_type: 8
+                    jump: DROP
+            when: is_exclusive == false
+          - name: make iptables rules persistent
+            shell: iptables-save > /etc/sysconfig/iptables
+          - name: enable iptables
+            service:
+                    name: iptables
+                    state: started
+                    enabled: yes
+          - name: enable chrony
+            service:
+                    name: chronyd
+                    state: restarted
+                    enabled: yes
+          - name: add docker repo
+            yum_repository:
+                    name: docker
+                    description: Docker CE Stable - $basearch
+                    baseurl: "{{ docker_repo }}"
+                    gpgcheck: yes
+                    gpgkey: "{{ docker_gpg_key }}"
+          - name: install docker
+            yum:
+                    name: "{{ docker_packages }}"
+                    update_cache: true
+                    state: present
+          - name: enable docker service
+            service:
+                    name: docker
+                    state: started
+                    enabled: yes
+          - name: install docker compose
+            shell: curl -L "{{ docker-compose_url }}" -o /usr/local/bin/docker-compose
+          - name: add execute permission to docker-compose
+            file:
+                    path: /usr/local/bin/docker-compose
+                    mode: '0744'
+          - name: link docker compose executable
+            file:
+                    src: /usr/local/bin/docker-compose
+                    dest: /usr/bin/docker-compose
+                    state: link
+- hosts: local
+  name: Prepare requirements on ansible
+  connection: local
+  remote_user: root
+  gather_facts: false
+  vars_files:
+          - ./vars.yml
+  tasks:
+          - name: create directories for projects to pull
+            file:
+                    path: "{{ ansible_exec_path }}/{{ item }}"
+                    state: directory
+            with_items:
+                    - backend
+                    - frontend
+          - name: clone backend repos
+            git:
+                    repo: git@{{ git_back_url }}/{{ item.local }}.git
+                    dest: "{{ ansible_exec_path }}/backend/{{ item.local }}"
+                    clone: yes
+                    version: master
+                    force: yes
+            with_items:
+                    - '{{ back_repo_names }}'
+          - name: clone frontend repos
+            git:
+                    repo: git@{{ git_front_url }}/{{ item.local }}.git
+                    dest: "{{ ansible_exec_path }}/frontend/{{ item.local }}"
+                    clone: yes
+                    version: master
+                    force: yes
+            with_items:
+                    - '{{ front_repo_names }}'
+          - name: install packages for backend repos
+            npm:
+                    path: "{{ ansible_exec_path }}/backend/{{ item.local }}"
+                    state: present
+                    production: True
+            with_items:
+                    - '{{ back_repo_names }}'
+          - name: update typescript
+            shell: cd "{{ ansible_exec_path }}/backend/{{ item.local }}" && npm install typescript@latest --save-dev
+            with_items:
+                    - '{{ back_repo_names }}'
+          - name: install specific packages for backend repos
+            npm:
+                    name: "{{ item }}"
+                    state: present
+                    global: yes
+            with_items:
+                    - pkg
+          - name: install packages for frontend repos
+            npm:
+                    path: "{{ ansible_exec_path }}/frontend/{{ item.local }}"
+                    state: present
+            with_items:
+                    - '{{ front_repo_names }}'
+          - name: build backend projects
+            shell: cd "{{ ansible_exec_path }}/backend/{{ item.local }}" && npm run build
+            with_items:
+                    - '{{ back_repo_names }}'
+          - name: create the binary file version of projects
+            shell: cd "{{ ansible_exec_path }}/backend/{{ item.local }}" && npm run make
+            with_items:
+                    - '{{ back_repo_names }}'
+          - name: build frontend projects
+            shell: cd "{{ ansible_exec_path }}/frontend/{{ item.local }}" && npm run build
+            with_items:
+                    - '{{ front_repo_names }}'
+- hosts: test
+  name: Deploy project
+  connection: ssh
+  remote_user: root
+  gather_facts: false
+  vars_files:
+          - ./vars.yml
+  tasks:
+          - name: create project directory on remote machine
+            file:
+                    path: "{{ remote_base_path }}"
+                    state: directory
+          - name: create project sub directories on remote machine
+            file:
+                    path: "{{ remote_base_path }}/{{ item }}"
+                    state: directory
+            with_items:
+                    - backend
+                    - frontend
+                    - certificates
+                    - nginx
+          - name: create project repo directories on remote machine
+            file:
+                    path: "{{ remote_base_path }}/backend/{{ item.remote }}-service"
+                    state: directory
+            with_items:
+                    - '{{ back_repo_names }}'
+          - name: copy docker-compose files to remote machine
+            copy:
+                    src: "{{ ansible_exec_path }}/docker-compose/{{ item }}"
+                    dest: "{{ remote_base_path }}/{{ item }}"
+            with_items:
+                    - docker-compose.yml
+                    - docker-compose.override.yml
+          - name: copy backend files to remote machine
+            copy:
+                    src: "{{ ansible_exec_path }}/backend/{{ item.local }}/{{ item.remote }}"
+                    dest: "{{ remote_base_path }}/backend/{{ item.remote }}-service/{{ item.remote }}"
+            with_items:
+                    - '{{ back_repo_names }}'
+          - name: copy Dockerfiles to remote machine
+            copy:
+                    src: "{{ ansible_exec_path }}/Dockerfile/{{ item }}"
+                    dest: "{{ remote_base_path }}/backend/{{ item }}-service/Dockerfile"
+            with_items:
+                    - '{{ dockerfiles }}'
+          - name: copy the specific library for auth service to remote machine
+            copy:
+                    src: "{{ ansible_exec_path }}/backend/rocket-auth-service/bcrypt_lib.node"
+                    dest: "{{ remote_base_path }}/backend/auth-service/bcrypt_lib.node"
+          - name: copy frontend files to remote machine
+            copy:
+                    src: "{{ ansible_exec_path }}/frontend/{{ item.local }}/build"
+                    dest: "{{ remote_base_path }}/frontend/{{ item.remote }}"
+            with_items:
+                    - '{{ front_repo_names }}'
+- hosts: local
+  name: Transferring domain spedific files
+  connection: local
+  remote_user: root
+  gather_facts: false
+  vars_files:
+          - ./vars.yml
+  tasks:
+          - name: copy nginx files to remote machines(with SSL)
+            shell: scp {{ ansible_exec_path }}/nginx/ssl/{{ item.domain }}/* {{ ssh_user }}@{{ item.addr }}:{{ remote_base_path }}/nginx/
+            with_items:
+                    - '{{ remote_hosts }}'
+            when: use_ssl == true
+          - name: copy nginx files to remote machines(without SSL)
+            shell: scp {{ ansible_exec_path }}/nginx/no-ssl/{{ item.domain }}/* {{ ssh_user }}@{{ item.addr }}:{{ remote_base_path }}/nginx/
+            with_items:
+                    - '{{ remote_hosts }}'
+            when: use_ssl == false
+          - name: copy certificate files to remote machines
+            shell: scp {{ ansible_exec_path }}/certificates/{{ item.domain }}/* {{ ssh_user }}@{{ item.addr }}:{{ remote_base_path }}/certificates/
+            with_items:
+                    - '{{ remote_hosts }}'
+            when: use_ssl == true
+          - name: copy environments to remote machines
+            shell: scp {{ ansible_exec_path }}/envs/general/{{ item.domain }} {{ ssh_user }}@{{ item.addr }}:{{ remote_base_path }}/.env
+            with_items:
+                    - '{{ remote_hosts }}'
+- hosts: test
+  name: Continue deploying project
+  connection: ssh
+  remote_user: root
+  gather_facts: false
+  vars_files:
+          - ./vars.yml
+  tasks:
+          - name: copy secrect names to remote mechine
+            copy:
+                    src: envs/secrets/names
+                    dest: /tmp/temp_env
+          - name: generate names
+            shell: for i in `seq 3`; do tr -dc "A-Za-z" < /dev/urandom | head -c 8 >> /tmp/temp_name; echo >> /tmp/temp_name; done
+          - name: assign environments with names
+            shell: paste -d "" /tmp/temp_env /tmp/temp_name >> /tmp/secrets
+          - name: copy secrect passwords to remote mechine
+            copy:
+                    src: envs/secrets/passwords
+                    dest: /tmp/temp_env
+          - name: generate passwords
+            shell: for i in `seq 5`; do tr -dc "A-Z0-9^*{}()a-z" < /dev/urandom | head -c 16 >> /tmp/temp_pass; echo >> /tmp/temp_pass; done
+          - name: assign environments with passwords
+            shell: paste -d "" /tmp/temp_env /tmp/temp_pass >> /tmp/secrets
+          - name: assign secrets to Docker
+            shell: cat /tmp/secrets >> "{{ remote_base_path }}/.env"
+          - name: remove temporary files
+            file:
+                    path: "/tmp/{{ item }}"
+                    state: absent
+            with_items:
+                    - temp_env
+                    - temp_name
+                    - temp_pass
+                    - secrets
+          - name: Adding execute permission to binaries
+            file:
+                    path: "{{ remote_base_path }}/backend/{{ item.remote }}-service/{{ item.remote }}"
+                    mode: ug+x
+            with_items:
+                    - '{{ back_repo_names }}'
+          - name: start essential services
+            shell: cd {{ remote_base_path }} && docker-compose up -d "{{ essential_services }}"
+          - name: start other services
+            shell: cd {{ remote_base_path }} && docker-compose up -d
+          - name: restart nginx
+            shell: cd {{ remote_base_path }} && docker-compose restart nginx
