@@ -174,10 +174,6 @@
                     production: True
             with_items:
                     - '{{ back_repo_names }}'
-          - name: update typescript
-            shell: cd "{{ ansible_exec_path }}/backend/{{ item.local }}" && npm install typescript@latest --save-dev
-            with_items:
-                    - '{{ back_repo_names }}'
           - name: install specific packages for backend repos
             npm:
                     name: "{{ item }}"
@@ -249,10 +245,6 @@
                     dest: "{{ remote_base_path }}/backend/{{ item }}-service/Dockerfile"
             with_items:
                     - '{{ dockerfiles }}'
-          - name: copy the specific library for auth service to remote machine
-            copy:
-                    src: "{{ ansible_exec_path }}/backend/rocket-auth-service/bcrypt_lib.node"
-                    dest: "{{ remote_base_path }}/backend/auth-service/bcrypt_lib.node"
           - name: copy frontend files to remote machine
             copy:
                     src: "{{ ansible_exec_path }}/frontend/{{ item.local }}/build"
@@ -283,7 +275,7 @@
                     - '{{ remote_hosts }}'
             when: use_ssl == true
           - name: copy environments to remote machines
-            shell: scp {{ ansible_exec_path }}/envs/general/{{ item.domain }} {{ ssh_user }}@{{ item.addr }}:{{ remote_base_path }}/.env
+            shell: scp {{ ansible_exec_path }}/envs/public/{{ item.domain }} {{ ssh_user }}@{{ item.addr }}:{{ remote_base_path }}/.env
             with_items:
                     - '{{ remote_hosts }}'
 - hosts: test
@@ -294,21 +286,21 @@
   vars_files:
           - ./vars.yml
   tasks:
-          - name: copy secrect names to remote mechine
+          - name: copy secrect users to remote mechine
             copy:
-                    src: envs/secrets/names
+                    src: envs/private/users
                     dest: /tmp/temp_env
-          - name: generate names
+          - name: generate users
             shell: for i in `seq 3`; do tr -dc "A-Za-z" < /dev/urandom | head -c 8 >> /tmp/temp_name; echo >> /tmp/temp_name; done
-          - name: assign environments with names
+          - name: assign environments with users
             shell: paste -d "" /tmp/temp_env /tmp/temp_name >> /tmp/secrets
-          - name: copy secrect passwords to remote mechine
+          - name: copy secrect secrets to remote mechine
             copy:
-                    src: envs/secrets/passwords
+                    src: envs/private/secrets
                     dest: /tmp/temp_env
-          - name: generate passwords
+          - name: generate secrets
             shell: for i in `seq 5`; do tr -dc "A-Z0-9^*{}()a-z" < /dev/urandom | head -c 16 >> /tmp/temp_pass; echo >> /tmp/temp_pass; done
-          - name: assign environments with passwords
+          - name: assign environments with secrets
             shell: paste -d "" /tmp/temp_env /tmp/temp_pass >> /tmp/secrets
           - name: assign secrets to Docker
             shell: cat /tmp/secrets >> "{{ remote_base_path }}/.env"

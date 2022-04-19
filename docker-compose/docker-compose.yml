@@ -7,7 +7,6 @@ services:
         network_mode: host
         environment:
             REDIS_PASSWORD: ${REDIS_SECRET}
-            REDIS_BINDING: 0.0.0.0
     mongo:
         network_mode: host
         image: mongo:4.4
