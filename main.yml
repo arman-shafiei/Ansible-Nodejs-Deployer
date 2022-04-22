@@ -35,9 +35,6 @@
               state: latest
             register: updated_packages
           - debug: var=updated_packages
-          - name: reboot system
-            reboot:
-                    reboot_timeout: 1200
           - name: install packages
             yum:
                     update_cache: true
