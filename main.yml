@@ -1,6 +1,6 @@
 ---
 
-- hosts: test
+- hosts: example
   name: Deploy basis
   connection: ssh
   remote_user: root
@@ -196,7 +196,7 @@
             shell: cd "{{ ansible_exec_path }}/frontend/{{ item.local }}" && npm run build
             with_items:
                     - '{{ front_repo_names }}'
-- hosts: test
+- hosts: example
   name: Deploy project
   connection: ssh
   remote_user: root
@@ -275,7 +275,7 @@
             shell: scp {{ ansible_exec_path }}/envs/public/{{ item.domain }} {{ ssh_user }}@{{ item.addr }}:{{ remote_base_path }}/.env
             with_items:
                     - '{{ remote_hosts }}'
-- hosts: test
+- hosts: example
   name: Continue deploying project
   connection: ssh
   remote_user: root
