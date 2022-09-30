@@ -1,1 +1,14 @@
 # Ansible-Nodejs-Deployer
+
+Ansible-Nodejs-Deployer is a sample project template which you can use to deploy your Node.js application on large number of linux machines.
+This project is all written in yaml. I have used variables, conditions, loops and ansible built-in modules.
+You should change variables and names to suit your needs.
+
+The file structure is as follow:
+1- **certificates**: Contains TLS certificates.
+2- **docker-compose**: Contains docker compose files for services to deploy.
+3- **Dockerfile**: Contains Dockerfiles for micro-services we're going to deploy.
+4- **envs**:  Contains environment variables and secrets which is needed by micro-services.
+5- **nginx**: Contains nginx webserver config files.
+6- **main.yml**: This is the Ansible yaml file we use to deploy our code.
+7- **vars.yml**: Contains all environment variables used in main.yml.
