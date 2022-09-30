@@ -24,3 +24,8 @@ The file structure is as follow:
 ## Requirements
 You need to run this script on a system with Ansible, python, docker and git available available. Your Ansible version must be at least 2.9.
 
+## RUN
+To run ansible just execute:
+```bash
+ansible-playbook main.yml
+```
