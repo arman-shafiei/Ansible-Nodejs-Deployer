@@ -23,6 +23,6 @@ services:
         network_mode: host
         volumes:
             - ./certificates:/etc/nginx/certificates
-            - ./frontend/kavidu-session-service:/var/www/html/class
+            - ./frontend:/var/www/html
             - ./nginx/nginx.conf:/etc/nginx/nginx.conf
             - ./nginx/default.conf:/etc/nginx/conf.d/default.conf

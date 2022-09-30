@@ -21,8 +21,10 @@ docker_packages:
 docker-compose_url: "https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-$(uname -s)-$(uname -m)"
 
 trusted_ssh_ips: <Your trusted IPs seperated by comma>
-ssh_port: 22
 trusted_icmp_ips: <Your trusted IPs seperated by comma>
+
+ssh_port: <Your SSH port>
+ssh_user: root
 
 is_exclusive: false
 
@@ -63,14 +65,11 @@ use_ssl: true
 essential_services:
         - mongo
         - redis
-        - cloud
         - nginx
 
 nginx_files:
         - nginx.conf
         - default.conf
-
-ssh_user: root
 
 remote_hosts:
         - domain: example.com

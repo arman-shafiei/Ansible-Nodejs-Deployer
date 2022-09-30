@@ -288,7 +288,7 @@
                     src: envs/private/users
                     dest: /tmp/temp_env
           - name: generate users
-            shell: for i in `seq 3`; do tr -dc "A-Za-z" < /dev/urandom | head -c 8 >> /tmp/temp_name; echo >> /tmp/temp_name; done
+            shell: for i in `seq 2`; do tr -dc "A-Za-z" < /dev/urandom | head -c 8 >> /tmp/temp_name; echo >> /tmp/temp_name; done
           - name: assign environments with users
             shell: paste -d "" /tmp/temp_env /tmp/temp_name >> /tmp/secrets
           - name: copy secrect secrets to remote mechine
@@ -296,7 +296,7 @@
                     src: envs/private/secrets
                     dest: /tmp/temp_env
           - name: generate secrets
-            shell: for i in `seq 5`; do tr -dc "A-Z0-9^*{}()a-z" < /dev/urandom | head -c 16 >> /tmp/temp_pass; echo >> /tmp/temp_pass; done
+            shell: for i in `seq 3`; do tr -dc "A-Z0-9^*{}()a-z" < /dev/urandom | head -c 16 >> /tmp/temp_pass; echo >> /tmp/temp_pass; done
           - name: assign environments with secrets
             shell: paste -d "" /tmp/temp_env /tmp/temp_pass >> /tmp/secrets
           - name: assign secrets to Docker
