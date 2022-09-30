@@ -8,7 +8,7 @@ You should change variables and names to suit your needs.
 The file structure is as follow:
 
 1- **certificates**: Contains TLS certificates.
-2- **docker-compose**: Contains docker compose files for services to deploy.\n
+2- **docker-compose**: Contains docker compose files for services to deploy.\\n
 3- **Dockerfile**: Contains Dockerfiles for micro-services we're going to deploy.
 4- **envs**:  Contains environment variables and secrets which is needed by micro-services.
 5- **nginx**: Contains nginx webserver config files.
