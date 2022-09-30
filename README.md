@@ -20,3 +20,7 @@ The file structure is as follow:
 6- **main.yml**: This is the Ansible yaml file we use to deploy our code.
 
 7- **vars.yml**: Contains all environment variables used in main.yml.
+
+## Requirements
+You need to run this script on a system with Ansible, python, docker and git available available. Your Ansible version must be at least 2.9.
+
