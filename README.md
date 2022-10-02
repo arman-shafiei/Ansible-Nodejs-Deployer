@@ -7,19 +7,19 @@ You should change variables and names to suit your needs.
 
 The file structure is as follow:
 
-1- **certificates**: Contains TLS certificates.
+- **certificates**: Contains TLS certificates.
 
-2- **docker-compose**: Contains docker compose files for services to deploy.
+- **docker-compose**: Contains docker compose files for services to deploy.
 
-3- **Dockerfile**: Contains Dockerfiles for micro-services we're going to deploy.
+- **Dockerfile**: Contains Dockerfiles for micro-services we're going to deploy.
 
-4- **envs**:  Contains environment variables and secrets which is needed by micro-services.
+- **envs**:  Contains environment variables and secrets which is needed by micro-services.
 
-5- **nginx**: Contains nginx webserver config files.
+- **nginx**: Contains nginx webserver config files.
 
-6- **main.yml**: This is the Ansible yaml file we use to deploy our code.
+- **main.yml**: This is the Ansible yaml file we use to deploy our code.
 
-7- **vars.yml**: Contains all environment variables used in main.yml.
+- **vars.yml**: Contains all environment variables used in main.yml.
 
 ## Requirements
 You need to run this script on a system with Ansible, python, docker and git available available. Your Ansible version must be at least 2.9.
