@@ -1,7 +1,7 @@
 # Ansible-Nodejs-Deployer
 
 
-<img src = "https://d7umqicpi7263.cloudfront.net/img/product/542db327-b437-4851-8f65-f15d5c80b4ef/e19a9f66-7cd7-4114-a2f1-6d43b77310e2.png" width ="250" /> <img src = "https://logos-download.com/wp-content/uploads/2016/09/Node_logo_NodeJS.png" width ="250" />
+<img src = "https://d7umqicpi7263.cloudfront.net/img/product/542db327-b437-4851-8f65-f15d5c80b4ef/e19a9f66-7cd7-4114-a2f1-6d43b77310e2.png" width ="250" alt="centered image" /> <img src = "https://logos-download.com/wp-content/uploads/2016/09/Node_logo_NodeJS.png" width ="250" alt="centered image" />
 
 Ansible-Nodejs-Deployer is a sample project template which you can use to deploy your Node.js application on large number of linux machines.
 This project is all written in yaml. I have used variables, conditions, loops and ansible built-in modules.
