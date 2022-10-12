@@ -2,7 +2,7 @@
 
 
 <p align="center" style="margin-bottom: 0px !important;">
-  <img width="500" src="https://raw.githubusercontent.com/arman-shafiei/page/main/photos/node_ansible.png" alt="Nodejs & Ansible Logo" align="center">
+  <img width="500" src="https://raw.githubusercontent.com/arman-shafiei/page/main/Logos/node_ansible.png" alt="Nodejs & Ansible Logo" align="center">
 </p>
 
 Ansible-Nodejs-Deployer is a sample project template which you can use to deploy your Node.js application on large number of linux machines.
